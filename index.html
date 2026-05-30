@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CCBE Discord Formatter Suite</title>
+    <link rel="icon" type="image/png" href="assets/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #2f3136; /* Discord Dark */
+            --card-bg: rgba(54, 57, 63, 0.75);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-main: #FFFFFF;
+            --text-muted: #dcddde;
+            --primary-event: #5865F2; /* Discord Purple */
+            --primary-trade: #faa81a; /* Trading Gold */
+            --glass-bg: rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            outline: none;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(88, 101, 242, 0.15) 0%, transparent 30%),
+                radial-gradient(circle at 90% 80%, rgba(250, 168, 26, 0.12) 0%, transparent 30%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2.5rem 1rem;
+        }
+
+        .hub-header {
+            text-align: center;
+            margin-top: 1rem;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        .hub-logo {
+            max-width: 90px;
+            margin-bottom: 1.2rem;
+            filter: drop-shadow(0 0 12px rgba(250, 168, 26, 0.35));
+            transition: transform 0.4s ease;
+        }
+
+        .hub-logo:hover {
+            transform: rotate(5deg) scale(1.05);
+        }
+
+        h1 {
+            font-size: 2.4rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #ffffff 40%, var(--primary-trade) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.5;
+            font-weight: 400;
+        }
+
+        /* Hub Grid layout */
+        .hub-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2.5rem;
+            width: 100%;
+            max-width: 950px;
+            margin: 3.5rem 0;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @media (max-width: 768px) {
+            .hub-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+                margin: 2rem 0;
+            }
+        }
+
+        /* Glassmorphism Hub Cards */
+        .hub-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative;
+            overflow: hidden;
+            gap: 1.5rem;
+        }
+
+        .hub-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            transition: all 0.4s ease;
+        }
+
+        /* Card Event specific rules */
+        .hub-card.card-event::before {
+            background: var(--primary-event);
+        }
+        .hub-card.card-event:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(88, 101, 242, 0.15), 0 15px 35px rgba(0, 0, 0, 0.5);
+            border-color: rgba(88, 101, 242, 0.3);
+        }
+
+        /* Card Trade specific rules */
+        .hub-card.card-trade::before {
+            background: var(--primary-trade);
+        }
+        .hub-card.card-trade:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(250, 168, 26, 0.15), 0 15px 35px rgba(0, 0, 0, 0.5);
+            border-color: rgba(250, 168, 26, 0.3);
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            background: rgba(255, 255, 255, 0.05);
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--card-border);
+            margin-bottom: 0.5rem;
+            transition: transform 0.4s ease;
+        }
+
+        .hub-card:hover .card-icon {
+            transform: scale(1.1) rotate(-5deg);
+        }
+
+        .hub-card.card-event .card-icon {
+            color: #7289da;
+            box-shadow: 0 0 15px rgba(88, 101, 242, 0.15);
+        }
+
+        .hub-card.card-trade .card-icon {
+            color: var(--primary-trade);
+            box-shadow: 0 0 15px rgba(250, 168, 26, 0.15);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+        }
+
+        .card-desc {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            font-family: 'Inter', sans-serif;
+            flex-grow: 1;
+            margin-bottom: 1rem;
+        }
+
+        /* Buttons */
+        .btn {
+            cursor: pointer;
+            padding: 0.85rem 2rem;
+            border-radius: 10px;
+            font-weight: 700;
+            border: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            font-size: 1rem;
+            width: 100%;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-event {
+            background-color: var(--primary-event);
+            color: white;
+        }
+
+        .btn-event:hover {
+            background-color: #7289da;
+            box-shadow: 0 0 20px rgba(88, 101, 242, 0.4);
+        }
+
+        .btn-trade {
+            background-color: var(--primary-trade);
+            color: #0b132b;
+        }
+
+        .btn-trade:hover {
+            background-color: #ffb703;
+            box-shadow: 0 0 20px rgba(250, 168, 26, 0.4);
+        }
+
+        /* Download Links */
+        .download-link {
+            font-size: 0.82rem;
+            color: rgba(255, 255, 255, 0.35);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+
+        .download-link:hover {
+            color: white;
+        }
+
+        .download-link svg {
+            transition: transform 0.2s ease;
+        }
+
+        .download-link:hover svg {
+            transform: translateY(2px);
+        }
+
+        /* Brand Footer with Creator Signature */
+        .hub-footer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .signature-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-text {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.35);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .sig-img {
+            max-height: 38px;
+            opacity: 0.85;
+            filter: drop-shadow(0 0 4px rgba(250, 168, 26, 0.25));
+            transition: filter 0.3s ease;
+        }
+
+        .sig-img:hover {
+            filter: drop-shadow(0 0 8px rgba(250, 168, 26, 0.5));
+        }
+
+        .logo-img {
+            max-height: 28px;
+            opacity: 0.9;
+            filter: drop-shadow(0 0 6px rgba(88, 101, 242, 0.3));
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HUB HEADER -->
+    <header class="hub-header">
+        <img src="assets/ccbe_logo.png" alt="CCBE Logo" class="hub-logo">
+        <h1>CCBE Formatter Suite</h1>
+        <p class="subtitle">Herramientas de diseño de invitaciones y anuncios optimizados para Discord de la Compañía Comercial del Borde Exterior.</p>
+    </header>
+
+    <!-- HUB GRID -->
+    <main class="hub-grid">
+
+        <!-- CARD 1: EVENT FORMATTER -->
+        <section class="hub-card card-event">
+            <div class="card-icon">📅</div>
+            <div>
+                <h2 class="card-title">Creador de Eventos</h2>
+                <p class="card-desc">Genera invitaciones de operaciones tácticas, eventos mineros y misiones grupales con marcas de tiempo dinámicas in-game y selectores de reacciones de Discord.</p>
+            </div>
+            <a href="CCBE_Discord_Event_Formater/CCBE_discord_event_formatter.html" class="btn btn-event">
+                Abrir Creador
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </a>
+            <a href="CCBE_Discord_Event_Formater/Formateador_Eventos_Para_CCBE.zip" class="download-link" download>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Descargar versión offline (.ZIP)
+            </a>
+        </section>
+
+        <!-- CARD 2: TRADE FORMATTER -->
+        <section class="hub-card card-trade">
+            <div class="card-icon">📦</div>
+            <div>
+                <h2 class="card-title">Comercio & Servicios</h2>
+                <p class="card-desc">Diseña anuncios dinámicos de ofertas de venta, solicitudes de compra y contratos de servicio. Estructurado para transferencias de aUEC y trueques in-game.</p>
+            </div>
+            <a href="CCBE_Discord_Sales_Formatter/CCBE_discord_sales_formatter.html" class="btn btn-trade">
+                Abrir Formateador
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </a>
+            <a href="CCBE_Discord_Sales_Formatter/Formateador_Ventas_Para_CCBE.zip" class="download-link" download>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Descargar versión offline (.ZIP)
+            </a>
+        </section>
+
+    </main>
+
+    <!-- HUB FOOTER -->
+    <footer class="hub-footer">
+        <div class="signature-box">
+            <span class="footer-text">Created by</span>
+            <img src="assets/signature.png" alt="The Razore Signature" class="sig-img">
+            <span class="footer-text">for</span>
+            <img src="assets/ccbe_logo.png" alt="CCBE Logo" class="logo-img">
+        </div>
+    </footer>
+
+</body>
+
+</html>

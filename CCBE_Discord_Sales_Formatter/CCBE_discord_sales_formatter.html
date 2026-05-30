@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CCBE Formateador de Comercio In-Game (Discord)</title>
+    <link rel="icon" type="image/png" href="assets/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #2f3136; /* Discord Dark */
+            --card-bg: rgba(54, 57, 63, 0.8);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --primary: #faa81a; /* Orange Trading Glow */
+            --primary-hover: #e08b00;
+            --text-main: #FFFFFF;
+            --text-muted: #dcddde;
+            --glass-bg: rgba(0, 0, 0, 0.25);
+            --input-bg: rgba(32, 34, 37, 0.6);
+            --success: #3ba55c;
+            --warning: #faa81a;
+            --danger: #ed4245;
+            --accent-item: #faa81a; /* Gold for Goods */
+            --accent-service: #9d4edd; /* Purple for Contracts */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            outline: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image:
+                radial-gradient(circle at 15% 25%, rgba(250, 168, 26, 0.1) 0%, transparent 25%),
+                radial-gradient(circle at 85% 75%, rgba(157, 78, 221, 0.08) 0%, transparent 25%),
+                radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.03) 0%, transparent 35%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        /* Layout */
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            width: 100%;
+            max-width: 1200px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @media (max-width: 950px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Glassmorphism Card Utils */
+        .glass-panel {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            height: fit-content;
+        }
+
+        .header-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 1rem;
+        }
+
+        h1, h2 {
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 0.2rem;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            background: linear-gradient(135deg, #ffffff 30%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Category Tabs (2 Tabs layout) */
+        .category-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.3rem;
+            border-radius: 10px;
+            border: 1px solid var(--card-border);
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.65rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+
+        .tab-btn:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active[data-category="item"] {
+            background: var(--accent-item);
+            color: #1e1e24;
+            box-shadow: 0 0 10px rgba(250, 168, 26, 0.4);
+        }
+
+        .tab-btn.active[data-category="service"] {
+            background: var(--accent-service);
+            color: white;
+            box-shadow: 0 0 10px rgba(157, 78, 221, 0.4);
+        }
+
+        /* Form Elements */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        @media (max-width: 600px) {
+            .form-grid > * {
+                grid-column: span 2 !important;
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        input, textarea, select {
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 0.75rem 0.9rem;
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(250, 168, 26, 0.2);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Dynamic form blocks */
+        .form-block {
+            display: none;
+            animation: fadeInBlock 0.3s ease-out forwards;
+        }
+
+        .form-block.active {
+            display: grid;
+        }
+
+        /* Buttons */
+        .btn {
+            cursor: pointer;
+            padding: 0.75rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            border: none;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: #0b132b;
+        }
+
+        .btn-primary:hover {
+            background-color: #ffb703;
+            transform: translateY(-1px);
+            box-shadow: 0 0 15px rgba(250, 168, 26, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        .btn-demo {
+            background: rgba(250, 168, 26, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(250, 168, 26, 0.2);
+        }
+
+        .btn-demo:hover {
+            background: rgba(250, 168, 26, 0.2);
+            color: white;
+        }
+
+        .actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Preview container styling */
+        .preview-container {
+            background: rgba(24, 25, 28, 0.9); /* Darker Discord theme for code blocks */
+            border-color: #202225;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 520px;
+        }
+
+        .preview-box {
+            background: #2f3136;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1.2rem;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #8e9297;
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-y: auto;
+            flex-grow: 1;
+            margin: 1rem 0;
+            max-height: 380px;
+            line-height: 1.5;
+            border-left: 4px solid var(--primary);
+        }
+
+        .preview-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--card-border);
+            padding-top: 1rem;
+        }
+
+        .char-count {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .char-count.limit-reached {
+            color: var(--danger);
+            animation: shake 0.3s ease;
+        }
+
+        /* Toast Alert */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(250, 168, 26, 0.95);
+            color: #0b132b;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInBlock {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        /* Custom Scrollbar for preview */
+        .preview-box::-webkit-scrollbar {
+            width: 8px;
+        }
+        .preview-box::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+            border-radius: 4px;
+        }
+        .preview-box::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+        .preview-box::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.25);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- FORM PANEL -->
+        <section class="glass-panel">
+            <div class="header-section">
+                <div>
+                    <h1>CCBE Trade & Service</h1>
+                    <div class="subtitle">Anuncios de objetos y servicios in-game para tu Org</div>
+                </div>
+                <button type="button" class="btn btn-demo" id="btnDemo">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    Cargar Demo
+                </button>
+            </div>
+
+            <!-- 2-Category Switcher tabs -->
+            <div class="category-tabs">
+                <button type="button" class="tab-btn active" data-category="item">📦 Objetos / Mercancías</button>
+                <button type="button" class="tab-btn" data-category="service">🛠️ Servicios / Contratos</button>
+            </div>
+
+            <!-- The main sales form -->
+            <form id="salesForm">
+                <div class="form-grid">
+
+                    <!-- NEW CHANGER: OFFER / REQUEST SWITCHER -->
+                    <div class="form-group full-width">
+                        <label for="postType">Tipo de Anuncio</label>
+                        <select id="postType">
+                            <option value="oferta">🟢 Oferta (Vendo objeto / Ofrezco servicio)</option>
+                            <option value="pedido">🔵 Pedido (Compro objeto / Busco servicio)</option>
+                        </select>
+                    </div>
+
+                    <!-- CATEGORY BLOCK 1: IN-GAME ITEMS / COMMODITIES -->
+                    <div class="form-block form-grid full-width active" id="block-item">
+                        <div class="form-group">
+                            <label for="itemCategory">Tipo de Objeto / Categoría</label>
+                            <input type="text" id="itemCategory" placeholder="Ej: Mineral Refinado, Carga, Equipamiento, Arma, Componente">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="itemName">Nombre del Objeto / Material</label>
+                            <input type="text" id="itemName" placeholder="Ej: Quantanium, RMC, Set Morozov, Rifle FS-9">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="itemQuantity">Cantidad / Volumen</label>
+                            <input type="text" id="itemQuantity" placeholder="Ej: 120 SCU, 5 sets completos, 3 cajas de munición">
+                        </div>
+
+                        <div class="form-group" id="itemLocationGroup">
+                            <label for="itemLocation" id="itemLocationLabel">Ubicación In-Game (Punto de Intercambio)</label>
+                            <input type="text" id="itemLocation" placeholder="Ej: Grim HEX (Hangares), Puerto Tressler, Hur-L1">
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="itemDescription" id="itemDescLabel">Descripción y estado del objeto (Opcional)</label>
+                            <textarea id="itemDescription" placeholder="Ej: Minerales altamente inestables en refinería lista para exportar, armaduras completamente nuevas de saqueo en búnkeres."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- CATEGORY BLOCK 2: SERVICES / CONTRACTS -->
+                    <div class="form-block form-grid full-width" id="block-service">
+                        <div class="form-group full-width">
+                            <label for="serviceName">Nombre / Tipo de Servicio</label>
+                            <input type="text" id="serviceName" placeholder="Ej: Escolta Armada, Artillero de Torreta, Asistencia Médica, Copiloto">
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="serviceDescription" id="serviceDescLabel">Tareas a realizar / Detalles del contrato</label>
+                            <textarea id="serviceDescription" placeholder="Ej: Escoltamos tu nave de minería MOLE o de carga C2 en Stanton y Pyro. Opcionalmente opero tu torreta láser de minería."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="serviceSchedule">Disponibilidad / Horarios</label>
+                            <input type="text" id="serviceSchedule" placeholder="Ej: Tardes/Noches (21h a 00h Peninsular)">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="serviceRequirements">Requisitos (Opcional)</label>
+                            <input type="text" id="serviceRequirements" placeholder="Ej: Estar en Stanton, canal de voz de la Org, reputación criminal limpia">
+                        </div>
+                    </div>
+
+                    <!-- COMMON FIELDS -->
+                    <div class="form-group">
+                        <label for="sellerName" id="sellerNameLabel">Anunciante (Discord Nick)</label>
+                        <input type="text" id="sellerName" placeholder="Ej: @MineroCCBE">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sellerHandle">RSI Handle In-Game</label>
+                        <input type="text" id="sellerHandle" placeholder="Ej: Admiral_Jones">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="saleStatus">Estado del Anuncio</label>
+                        <select id="saleStatus">
+                            <option value="🟢 Disponible / Activo">🟢 Disponible / Activo</option>
+                            <option value="⏳ Reservado / En trato">⏳ Reservado / En trato</option>
+                            <option value="🔴 Completado / Cerrado">🔴 Completado / Cerrado</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="paymentMethod" id="paymentMethodLabel">Método de Transferencia In-Game</label>
+                        <input type="text" id="paymentMethod" placeholder="Ej: Mo.Trader (aUEC), Trueque de RMC, Créditos Org">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="totalPrice" id="totalPriceLabel">Precio Total / Tarifa Base (aUEC / Trueques)</label>
+                        <input type="text" id="totalPrice" placeholder="Ej: 3,500,000 aUEC / 100,000 aUEC la hora / Trueque por RMC">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="additionalNotes" id="additionalNotesLabel">Instrucciones adicionales (Contacto y entrega)</label>
+                        <textarea id="additionalNotes" placeholder="Ej: Interesados reaccionar a este mensaje o contactar al vendedor por mensaje privado. Trato directo en puerto."></textarea>
+                    </div>
+
+                </div>
+
+                <div class="actions">
+                    <button type="button" class="btn btn-secondary" id="btnClear" style="flex:1">Limpiar Formulario</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- PREVIEW PANEL -->
+        <div style="display: flex; flex-direction: column; gap: 2rem;">
+            <section class="glass-panel preview-container">
+                <h2>Vista Previa de Anuncio</h2>
+                <div class="preview-box" id="previewOutput">Introduce información del anuncio para ver el Markdown resultante...</div>
+
+                <div class="preview-footer">
+                    <span class="char-count" id="charCount">0 / 2000 caracteres</span>
+                    <button type="button" class="btn btn-primary" id="btnCopy">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        Copiar Markdown
+                    </button>
+                </div>
+            </section>
+
+            <!-- Brand Footer with Creator Signature -->
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding-bottom: 1rem;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 0.8rem; flex-wrap: wrap;">
+                    <span style="font-size: 0.75rem; font-weight: 600; color: rgba(255, 255, 255, 0.35); text-transform: uppercase; letter-spacing: 0.05em;">Created by</span>
+                    <img src="assets/signature.png" alt="The Razore Signature" style="max-height: 38px; opacity: 0.85; filter: drop-shadow(0 0 4px rgba(250, 168, 26, 0.2));">
+                    <span style="font-size: 0.75rem; font-weight: 600; color: rgba(255, 255, 255, 0.35); text-transform: uppercase; letter-spacing: 0.05em;">for</span>
+                    <img src="assets/ccbe_logo.png" alt="CCBE Logo" style="max-height: 28px; opacity: 0.9; filter: drop-shadow(0 0 6px rgba(250, 168, 26, 0.3));">
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Copied Alert -->
+    <div class="toast" id="toast">🚀 ¡Copiado con éxito!</div>
+
+    <script>
+        // State
+        const form = document.getElementById('salesForm');
+        const preview = document.getElementById('previewOutput');
+        const btnCopy = document.getElementById('btnCopy');
+        const btnClear = document.getElementById('btnClear');
+        const btnDemo = document.getElementById('btnDemo');
+        const toast = document.getElementById('toast');
+        const charCount = document.getElementById('charCount');
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const formBlocks = document.querySelectorAll('.form-block');
+        const postTypeSelect = document.getElementById('postType');
+
+        let activeCategory = 'item'; // Default category
+
+        // Label update logic depending on Offer or Request type
+        function updateLabels() {
+            const isRequest = postTypeSelect.value === 'pedido';
+
+            if (activeCategory === 'item') {
+                document.getElementById('itemLocationLabel').textContent = isRequest ? "Punto de Entrega Sugerido (In-Game)" : "Ubicación In-Game (Punto de Intercambio)";
+                document.getElementById('itemDescLabel').textContent = isRequest ? "Descripción detallada del objeto buscado (Opcional)" : "Descripción y estado del objeto (Opcional)";
+            } else if (activeCategory === 'service') {
+                document.getElementById('serviceDescLabel').textContent = isRequest ? "Tareas requeridas / Detalles del servicio buscado" : "Tareas a realizar / Detalles del contrato ofrecido";
+            }
+
+            document.getElementById('sellerNameLabel').textContent = isRequest ? "Anunciante / Solicitante (Discord Nick)" : "Anunciante / Proveedor (Discord Nick)";
+            document.getElementById('totalPriceLabel').textContent = isRequest ? "Pago Ofrecido (aUEC / Trueques)" : "Precio Total / Tarifa Base (aUEC / Trueques)";
+            document.getElementById('additionalNotesLabel').textContent = isRequest ? "Instrucciones adicionales para el proveedor" : "Instrucciones adicionales (Contacto y entrega)";
+        }
+
+        postTypeSelect.addEventListener('change', () => {
+            updateLabels();
+            updatePreview();
+        });
+
+        // Dynamic category switcher (2 categories)
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tabButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const category = btn.dataset.category;
+                activeCategory = category;
+
+                formBlocks.forEach(block => {
+                    block.classList.remove('active');
+                });
+                document.getElementById(`block-${category}`).classList.add('active');
+
+                // Adjust primary theme color dynamically
+                if (category === 'item') {
+                    document.documentElement.style.setProperty('--primary', 'var(--accent-item)');
+                } else if (category === 'service') {
+                    document.documentElement.style.setProperty('--primary', 'var(--accent-service)');
+                }
+
+                updateLabels();
+                updatePreview();
+            });
+        });
+
+        // Markdown Generator (Extremely open, flexible, Offer vs Request)
+        function generateMarkdown() {
+            // General fields
+            const isRequest = postTypeSelect.value === 'pedido';
+            const seller = document.getElementById('sellerName').value.trim();
+            const handle = document.getElementById('sellerHandle').value.trim();
+            const status = document.getElementById('saleStatus').value.trim();
+            const payment = document.getElementById('paymentMethod').value.trim();
+            const totalVal = document.getElementById('totalPrice').value.trim();
+            const notes = document.getElementById('additionalNotes').value.trim();
+
+            let titleStr = "";
+            let detailsStr = "";
+
+            if (activeCategory === 'item') {
+                const iCategory = document.getElementById('itemCategory').value.trim();
+                const iName = document.getElementById('itemName').value.trim();
+                const iQty = document.getElementById('itemQuantity').value.trim();
+                const iLocation = document.getElementById('itemLocation').value.trim();
+                const iDesc = document.getElementById('itemDescription').value.trim();
+
+                if (!iName || !iQty) {
+                    return "Rellena el campo 'Nombre del Objeto' y 'Cantidad' para generar el anuncio.";
+                }
+
+                const typeBadge = isRequest ? '🔵 [PEDIDO / COMPRA]' : '🟢 [OFERTA / VENTA]';
+                const catBadge = iCategory ? `${iCategory.toUpperCase()}` : 'OBJETO';
+                titleStr = `# ${typeBadge} ${catBadge} - ${iName} (${iQty})\n`;
+                
+                detailsStr = `*   **Mercancía / Objeto:** ${iName}\n*   **Cantidad / Volumen:** ${iQty}\n`;
+                if (iCategory) {
+                    detailsStr += `*   **Categoría de objeto:** ${iCategory}\n`;
+                }
+                if (iLocation) {
+                    detailsStr += `*   **Punto de entrega ${isRequest ? 'sugerido' : 'actual'}:** 📍 ${iLocation}\n`;
+                }
+                if (iDesc) {
+                    detailsStr += `*   **Descripción ${isRequest ? 'específica' : 'del lote'}:**\n    > ${iDesc.replace(/\n/g, '\n    > ')}\n`;
+                }
+            } else if (activeCategory === 'service') {
+                const sName = document.getElementById('serviceName').value.trim();
+                const sDesc = document.getElementById('serviceDescription').value.trim();
+                const sSchedule = document.getElementById('serviceSchedule').value.trim();
+                const sReqs = document.getElementById('serviceRequirements').value.trim();
+
+                if (!sName || !sDesc) {
+                    return "Rellena el campo 'Nombre del Servicio' y 'Tareas' para generar el anuncio.";
+                }
+
+                const typeBadge = isRequest ? '🔵 [PEDIDO / BUSCO SERVICIO]' : '🟢 [OFERTA DE SERVICIO]';
+                titleStr = `# ${typeBadge} ${sName}\n`;
+                detailsStr = `*   **Servicio ${isRequest ? 'solicitado' : 'ofrecido'}:** ${sName}\n`;
+                if (sSchedule) {
+                    detailsStr += `*   **Disponibilidad / Horarios:** ${sSchedule}\n`;
+                }
+                if (sReqs) {
+                    detailsStr += `*   **Requisitos ${isRequest ? 'del candidato' : 'del contratante'}:** ${sReqs}\n`;
+                }
+                detailsStr += `*   **Detalles ${isRequest ? 'de la tarea requerida' : 'de tareas ofrecidas'}:**\n    > ${sDesc.replace(/\n/g, '\n    > ')}\n`;
+            }
+
+            // Build Main Markdown
+            let md = titleStr;
+
+            if (status) md += `> **ESTADO:** ${status}\n`;
+            const advertiserRole = isRequest ? 'COMPRADOR / SOLICITANTE' : 'VENDEDOR / PROVEEDOR';
+            if (seller) md += `> **${advertiserRole}:** ${seller}`;
+            if (handle) md += ` (Handle RSI: \`${handle}\`)`;
+            md += `\n\n---\n### 📋 DETALLES DE LA TRANSACCIÓN\n${detailsStr}\n`;
+
+            // Payment & Price Codeblock (YAML styling renders beautifully on Discord)
+            if (totalVal || payment) {
+                const priceHeader = isRequest ? '💰 PAGO OFRECIDO IN-GAME' : '💰 COSTE Y TRANSFERENCIA IN-GAME';
+                md += `---\n### ${priceHeader}\n\`\`\`yaml\n`;
+                if (totalVal) md += `${isRequest ? 'Pago Propuesto' : 'Precio Total'}: "${totalVal}"\n`;
+                if (payment) md += `Metodo Pago: "${payment}"\n`;
+                md += `\`\`\`\n`;
+            }
+
+            // Notes
+            if (notes) {
+                md += `---\n### 📝 INSTRUCCIONES Y CONTACTO\n${notes}\n`;
+            } else {
+                const actionHeader = isRequest ? '🛒 CÓMO SUMINISTRAR / HACER TRATO' : '🛒 CÓMO ADQUIRIR / CONTRATAR';
+                const actionDesc = isRequest ? 'Si dispones del objeto o servicio solicitado, reacciona a este anuncio o contacta al solicitante por privado.' : 'Para solicitar esta transacción, reacciona a este anuncio o contacta al vendedor mediante mensaje privado.';
+                md += `---\n### ${actionHeader}\n${actionDesc} ¡Nos vemos en el verso!\n`;
+            }
+
+            // Copy button styling adjustment
+            btnCopy.style.opacity = '1';
+            btnCopy.style.cursor = 'pointer';
+
+            return md;
+        }
+
+        // Live updates
+        function updatePreview() {
+            const mk = generateMarkdown();
+            preview.textContent = mk;
+
+            const length = mk.length;
+            charCount.textContent = `${length} / 2000 caracteres`;
+
+            if (length > 2000) {
+                charCount.classList.add('limit-reached');
+            } else {
+                charCount.classList.remove('limit-reached');
+            }
+        }
+
+        // Bind all inputs for live updates
+        form.addEventListener('input', updatePreview);
+        form.addEventListener('change', updatePreview);
+
+        // Copy Functionality
+        btnCopy.addEventListener('click', () => {
+            const content = preview.textContent;
+            if (content.startsWith("Rellena") || content.startsWith("Introduce")) {
+                showToast("⚠️ Introduce información obligatoria primero");
+                return;
+            }
+
+            navigator.clipboard.writeText(content).then(() => {
+                showToast("🚀 ¡Anuncio copiado con éxito!");
+            }).catch(err => {
+                showToast("❌ Error al copiar");
+            });
+        });
+
+        // Clear Form functionality
+        btnClear.addEventListener('click', () => {
+            form.reset();
+            updateLabels();
+            updatePreview();
+            showToast("🧹 Formulario restablecido");
+        });
+
+        // Smart Demo Data Loader (Matches Active Category AND active Announcement Type!)
+        btnDemo.addEventListener('click', () => {
+            const isRequest = postTypeSelect.value === 'pedido';
+
+            if (activeCategory === 'item') {
+                if (!isRequest) {
+                    // OFFER demo (Vendo)
+                    document.getElementById('itemCategory').value = "Mineral Refinado";
+                    document.getElementById('itemName').value = "Quantanium de Alta Pureza";
+                    document.getElementById('itemQuantity').value = "120 SCU (Lote completo)";
+                    document.getElementById('itemLocation').value = "Refinería de Hur-L1 (Estación Espacial)";
+                    document.getElementById('itemDescription').value = "Quantanium refinado grado A. Completamente estable en terminal de refinería listo para ser cargado en tu nave de carga pesada.\n¡Ideal para reventa de alto beneficio en TDD!";
+
+                    document.getElementById('sellerName').value = "@MineroCCBE";
+                    document.getElementById('sellerHandle').value = "Miner_Alpha";
+                    document.getElementById('saleStatus').value = "🟢 Disponible / Activo";
+                    document.getElementById('paymentMethod').value = "Mo.Trader (Aplicación del MobiGlas - aUEC)";
+                    document.getElementById('totalPrice').value = "3,600,000 aUEC (Lote completo)";
+                    document.getElementById('additionalNotes').value = "El traspaso se realizará en el hangar asignado de Hur-L1. Hacemos el traspaso de cargo seguro en terminal de refinería. Pago del 100% mediante Mo.Trader al comenzar la transferencia física.";
+                } else {
+                    // REQUEST demo (Compro)
+                    document.getElementById('itemCategory').value = "Material de Reciclaje";
+                    document.getElementById('itemName').value = "RMC (Recycled Material Composite)";
+                    document.getElementById('itemQuantity').value = "60 SCU";
+                    document.getElementById('itemLocation').value = "Plataforma de Orison (Port Solare)";
+                    document.getElementById('itemDescription').value = "Necesito RMC para reparar el casco de mi nave capital de la Org tras la última incursión. Preferiblemente entrega en Orison o alrededores.";
+
+                    document.getElementById('sellerName').value = "@IngenieroCCBE";
+                    document.getElementById('sellerHandle').value = "Mech_Vanguard";
+                    document.getElementById('saleStatus').value = "🟢 Disponible / Activo";
+                    document.getElementById('paymentMethod').value = "Mo.Trader (aUEC in-game) o Trueque de minerales refinados";
+                    document.getElementById('totalPrice').value = "15,000 aUEC por SCU (900,000 aUEC total)";
+                    document.getElementById('additionalNotes').value = "Mandar un mensaje privado por Discord para acordar hora de entrega. Pago inmediato al completar la transferencia en la zona de hangares.";
+                }
+            } else if (activeCategory === 'service') {
+                if (!isRequest) {
+                    // SERVICE OFFER demo (Ofrezco)
+                    document.getElementById('serviceName').value = "Artillero de Torreta Pesada & Soporte de Minería";
+                    document.getElementById('serviceDescription').value = "Me ofrezco como tripulante secundario para naves pesadas como MOLE (operando torretas láser de minería) o Reclaimer (ingeniero/reparador). También capacitado como artillero de torretas defensivas en naves como Hammerhead o Carrack en zonas de alta hostilidad.";
+                    document.getElementById('serviceSchedule').value = "Diario a partir de las 22:00h Peninsular Española";
+                    document.getElementById('serviceRequirements').value = "Nave industrial o de combate lista en el sistema Stanton o Pyro. Uso de canal de voz de la Org obligatorio.";
+
+                    document.getElementById('sellerName').value = "@ArtilleroCCBE";
+                    document.getElementById('sellerHandle').value = "Gunner_Jones";
+                    document.getElementById('saleStatus').value = "🟢 Disponible / Activo";
+                    document.getElementById('paymentMethod').value = "Mo.Trader in-game (Tarifa fija o división al 20%)";
+                    document.getElementById('totalPrice').value = "100,000 aUEC la hora o división porcentual";
+                    document.getElementById('additionalNotes').value = "Mandar un mensaje privado por Discord indicando el tipo de nave, la misión prevista (minería, carga o combate) y la hora de salida para asegurar mi slot en la tripulación.";
+                } else {
+                    // SERVICE REQUEST demo (Busco)
+                    document.getElementById('serviceName').value = "Escolta Armada para ruta minera en Yela";
+                    document.getElementById('serviceDescription').value = "Busco escolta armada (mínimo un caza mediano/pesado tipo Vanguard, Gladius o Hornet) para proteger mi Argo MOLE de piratas mientras realizamos pasadas de minería de Quantanium en el cinturón de Yela.";
+                    document.getElementById('serviceSchedule').value = "Hoy sábado de 21:30h a 23:30h Peninsular Española";
+                    document.getElementById('serviceRequirements').value = "Llevar caza con motor de salto rápido, no Criminal Rating (para evitar ataques del sistema de seguridad local).";
+
+                    document.getElementById('sellerName').value = "@MineroCCBE";
+                    document.getElementById('sellerHandle').value = "Captain_Prospector";
+                    document.getElementById('saleStatus').value = "🟢 Disponible / Activo";
+                    document.getElementById('paymentMethod').value = "Mo.Trader in-game (Se paga el 50% al iniciar y el resto al finalizar)";
+                    document.getElementById('totalPrice').value = "180,000 aUEC la hora por piloto";
+                    document.getElementById('additionalNotes').value = "Los interesados reaccionar con 🛡️ o mandar un mensaje privado directamente por Discord para coordinar el grupo in-game.";
+                }
+            }
+
+            updateLabels();
+            updatePreview();
+            showToast("🎮 Demo in-game inteligente cargada");
+        });
+
+        // Custom toast helper
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Init
+        updateLabels();
+        updatePreview();
+
+    </script>
+</body>
+
+</html>
